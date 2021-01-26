@@ -6,7 +6,8 @@ from flask_marshmallow import Marshmallow
 app = Flask(__name__)
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://webadmin:VRMxoy95713@node8619-advweb-25.app.ruk-com.cloud:11095/CloudDB'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://webadmin:VRMxoy95713@node8619-advweb-25.app.ruk-com.cloud:11095/CloudDB'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://webadmin:VRMxoy95713@10.100.2.213:5432/CloudDB'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -35,7 +36,6 @@ class StaffSchema(ma.Schema):
 staff_schema = StaffSchema()
 staffs_schema = StaffSchema(many=True)
 
-
 # Get All Staffs
 @app.route('/staffs', methods=['GET'])
 def get_staffs():
@@ -43,12 +43,52 @@ def get_staffs():
     result = staffs_schema.dump(all_staffs)
     return jsonify(result)
 
-# Get All Staffs
-@app.route('/staffs', methods=['GET'])
-def get_staffs():
-    all_staffs = Staffs.query.all()
-    result = staffs_schema.dump(all_staffs)
-    return jsonify(result)
+# Get Single Staff
+@app.route('/staff/<id>', methods=['GET'])
+def get_staff(id):
+    staff = Staffs.query.get(id)
+    return staff_schema.jsonify(staff)
+
+# Create a Staff
+@app.route('/staff', methods=['POST'])
+def add_staff():
+    id = request.json['id']
+    name = request.json['name']
+    email = request.json['email']
+    phone = request.json['phone']
+
+    new_staff = Staffs(id, name, email, phone)
+
+    db.session.add(new_staff)
+    db.session.commit()
+
+    return staff_schema.jsonify(new_staff)
+
+# Update a Staff
+@app.route('/staff/<id>', methods=['PUT'])
+def update_staff(id):
+    staff = Staffs.query.get(id)
+    
+    name = request.json['name']
+    email = request.json['email']
+    phone = request.json['phone']
+
+    staff.name = name
+    staff.email = email
+    staff.phone = phone
+
+    db.session.commit()
+
+    return staff_schema.jsonify(staff)
+
+# Delete Staff
+@app.route('/staff/<id>', methods=['DELETE'])
+def delete_staff(id):
+    staff = Staffs.query.get(id)
+    db.session.delete(staff)
+    db.session.commit()
+    
+    return staff_schema.jsonify(staff)
 
 # Web Root Hello
 @app.route('/', methods=['GET'])
